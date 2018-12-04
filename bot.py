@@ -5,6 +5,8 @@ import asyncio
 import datetime
 from config import *
 
+# Fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246 
+
 PREVIOUS_DATE = new_time.localize(datetime.datetime.now()).astimezone(old_time)
 
 class Spotty(discord.Client):
