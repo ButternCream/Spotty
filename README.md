@@ -4,10 +4,10 @@
 ##### Spotty will fetch songs in the specified playlist every X seconds.
 ##### If it finds any new songs it will post it to the specified discord channel
 
-###What it looks like
+### What it looks like
 ![Image](https://i.imgur.com/JQADBCK.png)
 
-###*Todo*
+### *Todo*
 - Instead of saving the entire playlist in a set :scream:, simply save the last time checked. Then filter the next fetch based on the previous time.
 - Wait for spotify webhooks
 
