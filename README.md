@@ -1,5 +1,5 @@
 # Spotty
-##### *The spotify music sharing bot*
+### The spotify music sharing bot
 
 ##### Spotty will fetch songs in the specified playlist every X seconds.
 ##### If it finds any new songs it will post it to the specified discord channel
