@@ -4,6 +4,8 @@ import discord
 import asyncio
 from config import *
 
+# Fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246 
+
 CURRENT_URLS = set()
 
 class Spotty(discord.Client):
