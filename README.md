@@ -8,7 +8,7 @@
 ![Image](https://i.imgur.com/JQADBCK.png)
 
 ### *Todo*
-- Instead of saving the entire playlist in a set :scream:, simply save the last time checked. Then filter the next fetch based on the previous time.
+- ~~Instead of saving the entire playlist in a set :scream:, simply save the last time checked. Then filter the next fetch based on the previous time.~~
 - Wait for spotify webhooks
 
 ### My Config File
@@ -24,4 +24,8 @@ music_channel = # The channel id for the bot i.e # 12345...
 
 spotify_user_id = 'some_user_id'
 spotify_playlist_id = 'some_playlist_id'
+
+old_time = pytz.timezone("UTC") # Spotify's timestamps
+new_time = pytz.timezone("America/Los_Angeles") # Your timezone
+
 ```
