@@ -14,6 +14,7 @@
 ### My Config File
 ```python
 import os
+import pytz
 
 client_id = os.getenv('SPOTIFY_CLIENT_ID')
 client_secret = os.getenv('SPOTIFY_SECRET')
@@ -21,6 +22,7 @@ spotty_token = os.getenv('SPOTTY_TOKEN') # Bot token
 
 test_channel = # A testing channel I used
 music_channel = # The channel id for the bot i.e # 12345...
+delay = 10
 
 spotify_user_id = 'some_user_id'
 spotify_playlist_id = 'some_playlist_id'
