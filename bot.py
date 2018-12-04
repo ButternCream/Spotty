@@ -22,7 +22,7 @@ class Spotty(discord.Client):
 		await self.wait_until_ready()
 		channel = self.get_channel(self.spotty_channel_id)
 		while not self.is_closed():
-			await asyncio.sleep(15) # Sleep 2 hours, spotify doesnt have webhooks yet :(
+			await asyncio.sleep(7200) # Sleep 2 hours, spotify doesnt have webhooks yet :(
 			songs = await fetch_playlist(spotify_user_id, spotify_playlist_id)
 			#print(songs)
 			for song in songs:
