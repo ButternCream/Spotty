@@ -25,6 +25,17 @@ class Spotty(commands.Bot):
 		self.add_command(self.me)
 		self.add_command(self.stopall)
 		self.add_command(self.stop)
+		self.add_command(self.link)
+
+	@commands.command()
+	async def link(self, ctx):
+		message = ctx.message
+		split = message.content.split(' ')
+		if len(split) != 2:
+			return await ctx.send(bold("Usage: !link <id>"))
+		id = self._dbpointer.get_playlist_id_by_unique_id(split[1])[0]
+		url = await fetch_playlist_link(spotify_user_id, id)
+		await ctx.send(url)
 
 	@commands.command()
 	async def tracking(self, ctx):
@@ -37,7 +48,7 @@ class Spotty(commands.Bot):
 			return await ctx.send(bold("#{0} is not currently tracking any playlists.".format(channel_name)))
 		string = "Channel is currently tracking:\n"
 		for (id, name) in data:
-			string += "%d - %s\n" % (id, name)
+			string += "'%s' - ID: %d\n" % (name, id)
 		await ctx.send(string) 
 
 	@commands.command()
@@ -125,7 +136,6 @@ class Spotty(commands.Bot):
 		:return: None
 		"""
 		await self.wait_until_ready()
-		print("Fetching new songs")
 		while not self.is_closed():
 			data = self._dbpointer.fetch_tracking_data()
 			for (playlist_id, playlist_name, channel_id, last_checked) in data:
@@ -193,6 +203,10 @@ async def fetch_playlist_name(username, playlist_id):
 	"""
 	result = spotify.user_playlist(username, playlist_id)
 	return result['name']
+
+async def fetch_playlist_link(username, playlist_id):
+	result = spotify.user_playlist(username, playlist_id)
+	return result['external_urls']['spotify']
 
 async def fetch_playlist(username, playlist_id, previous_date):
 	"""

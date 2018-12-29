@@ -25,7 +25,7 @@
 !me - print out database entries associated with your discord id (master_id in config.py) (debugging purposes)
 !stop <id> - Stop the current channel from tracking anything or a specific playlist if the id from !tracking is specified
 !stopall - Removes ALL of your tracking entries in the database
-!delay <new-delay> - Sets or returns the delay between fetches (in seconds). <new-delay> is optional
+!link <id> - Get the link of a playlist you are tracking. Get id from !tracking
 ```
 
 ### How to setup :question:
