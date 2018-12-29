@@ -8,8 +8,14 @@ from database import DatabasePointer
 from config import *
 import re
 import time
+import logging
+logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.INFO, format=' %(asctime)s - %(levelname)s - %(message)s')
 
 # Fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246
+
+# discord.abc.GuildChannel -> category [CategoryChannel]
+# discord.CategoryChannel -> name, channels
+# https://discordapp.com/oauth2/authorize?scope=bot&permissions=66321471&client_id=<bot-id> (optional)&guild_id=<server-id> Example on how to add with all perms
 
 class Spotty(commands.Bot):
 	def __init__(self, *args, **kwargs):
@@ -20,6 +26,7 @@ class Spotty(commands.Bot):
 		self.register_commands()
 
 	def register_commands(self):
+		self.add_command(self.test)
 		self.add_command(self.tracking)
 		self.add_command(self.track)
 		self.add_command(self.me)
@@ -28,9 +35,27 @@ class Spotty(commands.Bot):
 		self.add_command(self.link)
 
 	@commands.command()
-	async def link(self, ctx):
+	@commands.is_owner()
+	async def test(self, ctx):
 		message = ctx.message
-		split = message.content.split(' ')
+		await ctx.send(message.author, "Hi")
+		guild = message.guild
+		channels = guild.channels
+		categories = {channel.category.name if channel.category else None for channel in channels}
+		roles = guild.roles
+		members = some_role.members
+		music_channels = list()
+		for channel in channels:
+			if channel.category is None: continue
+			if channel.category.name == 'Music':
+				music_channels.append(channel.name)
+		logging.info(guild.name)
+		logging.info(categories)
+		logging.info(music_channels)
+
+	@commands.command()
+	async def link(self, ctx):
+		split = ctx.message.content.split(' ')
 		if len(split) != 2:
 			return await ctx.send(bold("Usage: !link <id>"))
 		id = self._dbpointer.get_playlist_id_by_unique_id(split[1])[0]
@@ -39,8 +64,7 @@ class Spotty(commands.Bot):
 
 	@commands.command()
 	async def tracking(self, ctx):
-		message = ctx.message
-		channel_id = message.channel.id
+		channel_id = ctx.channel.id
 		channel_name = await self.get_channel_name(channel_id)
 
 		data = self._dbpointer.fetch_playlists_by_channel_id(channel_id)
@@ -53,49 +77,47 @@ class Spotty(commands.Bot):
 
 	@commands.command()
 	async def track(self, ctx):
-		message = ctx.message
-
-		roles = [role.name.lower() for role in message.author.roles]
-		user_id = message.author.id
-		username = message.author.name
-		channel_id = message.channel.id
+		roles = [role.name.lower() for role in ctx.author.roles]
+		user_id = ctx.author.id
+		username = ctx.author.name
+		channel_id = ctx.channel.id
 		channel_name = await self.get_channel_name(channel_id)
+		guild_name = ctx.guild.name
 
-		split = message.content.split(' ')
+		split = ctx.message.content.split(' ')
 		if len(split) != 2:
 			return await ctx.send(bold("Usage: !track <playlist-url>"))
-		if 'spotty admin' not in roles: return await warn_user(message.channel)
+		if 'spotty admin' not in roles: return await warn_user(ctx.channel)
 		playlist_id = await extract_playlist_id(split[1])
 		playlist_name = await fetch_playlist_name(spotify_user_id, playlist_id)
-		self._dbpointer.insert(username, user_id, playlist_id, playlist_name, channel_id, channel_name, get_current_time(as_string=True))
+		if not self._dbpointer.insert(guild_name,username, user_id, playlist_id, playlist_name, channel_id, channel_name, get_current_time(as_string=True)):
+			return await ctx.send("The channel #{0} already tracking {1}?".format(channel_name, playlist_name))
 		await ctx.send(bold("#{0} is now tracking the playlist '{1}'".format(channel_name, playlist_name)))
 
 	@commands.command()
 	@commands.is_owner()
 	async def me(self, ctx):
-		message = ctx.message
-		user_id = message.author.id
+		user_id = ctx.author.id
 		for row in self._dbpointer.fetch_by_user_id(user_id):
 			await ctx.send(row) 
 
 	@commands.command()
 	async def stopall(self, ctx):
-		message = ctx.message
-		user_id = message.author.id
-		if 'spotty admin' not in roles: return await warn_user(message.channel)
+		roles = [role.name.lower() for role in ctx.author.roles]
+		user_id = ctx.author.id
+		if 'spotty admin' not in roles: return await warn_user(ctx.channel)
 		self._dbpointer.delete_all(user_id) 
 		await ctx.send(bold('Removed all playlists you were tracking from the database.'))
 
 	@commands.command()
 	async def stop(self, ctx):
-		message = ctx.message
-		roles = [role.name.lower() for role in message.author.roles]
-		user_id = message.author.id
-		channel_id = message.channel.id
+		roles = [role.name.lower() for role in ctx.author.roles]
+		user_id = ctx.author.id
+		channel_id = ctx.channel.id
 		channel_name = await self.get_channel_name(channel_id)
 
-		if 'spotty admin' not in roles: return await warn_user(message.channel)
-		split = message.content.split(' ')
+		if 'spotty admin' not in roles: return await warn_user(ctx.channel)
+		split = ctx.message.content.split(' ')
 		if len(split) > 1:
 			id = int(split[1])
 			owner_id = int(self._dbpointer.get_user_id_for_unique_id(id)[0])
@@ -108,7 +130,7 @@ class Spotty(commands.Bot):
 		await ctx.send(bold('#{0} has stopped tracking all playlists.'.format(channel_name)))
 
 	async def on_ready(self):
-		print('We have logged in as {0.user}'.format(self))
+		logging.info('We have logged in as {0.user}'.format(self))
 		await discord_client.change_presence(activity=discord.Game(name="Spotify"))
 
 	async def on_message(self, message):
@@ -124,7 +146,7 @@ class Spotty(commands.Bot):
 		"""
 		channel = self.get_channel(channel_id)
 		songs = await fetch_playlist(spotify_user_id, playlist_id, last_checked)
-		print("Found {0} songs in '{1}'".format(len(songs), playlist_name))
+		logging.info("Found {0} songs in '{1}'".format(len(songs), playlist_name))
 		for song in songs:
 			await channel.send("New track added to '{0}'. {1}".format(playlist_name, song))
 		self._dbpointer.update_time(channel_id, playlist_id, get_current_time(as_string=True))
@@ -167,7 +189,7 @@ async def extract_playlist_id(string):
 	result = p.findall(string)
 	if len(result) > 0:
 		return result[0]
-	print('Invalid playlist id or url')
+	logging.info('Invalid playlist id or url')
 
 def convert_time(time_string):
 	"""
@@ -226,7 +248,7 @@ async def fetch_playlist(username, playlist_id, previous_date):
 				if convert_time(item['added_at']) > previous_date:
 					new_songs.append(track_url)
 			except (KeyError, UnicodeEncodeError) as e:
-				print(u'Skipping track {0} by {1} (local only?)'.format(
+				logging.info(u'Skipping track {0} by {1} (local only?)'.format(
 					track['name'], track['artists'][0]['name']))
 		# 1 page = 50 results
 		# check if there are more pages
@@ -242,3 +264,4 @@ if __name__ == '__main__':
 	token = generate_token()
 	spotify = spotipy.Spotify(auth=token)
 	discord_client.run(spotty_token)
+	logging.info("Started spotty")
