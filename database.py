@@ -1,5 +1,5 @@
 import sqlite3
-from sqlite3 import OperationalError
+from sqlite3 import OperationalError, IntegrityError
 
 """
 Database class to manage the database and various operations
@@ -19,6 +19,7 @@ class DatabasePointer(object):
         with self._connection:
             self._cursor.execute("""CREATE TABLE IF NOT EXISTS playlists (
              u_id INTEGER PRIMARY KEY,
+             guild_name TEXT,
              username TEXT,
              user_id TEXT,
              playlist_id TEXT,
@@ -29,12 +30,17 @@ class DatabasePointer(object):
              UNIQUE(playlist_id, channel_id)
              )""")
 
-    def insert(self, username, user_id, playlist_id, playlist_name, channel_id, channel_name, last_checked):
+    def insert(self, guild_name, username, user_id, playlist_id, playlist_name, channel_id, channel_name, last_checked):
         with self._connection:
-            self._cursor.execute("""INSERT INTO playlists (username, user_id, playlist_id, playlist_name, channel_id, channel_name, last_checked) 
-            VALUES (:username, :user_id, :playlist_id, :playlist_name, :channel_id, :channel_name, :last_checked)""",  
-            {"username": username, "user_id": user_id, "playlist_id": playlist_id, "playlist_name":playlist_name, "channel_id": channel_id, 
-            "channel_name": channel_name, "last_checked": last_checked})
+            try:
+                self._cursor.execute("""INSERT INTO playlists (guild_name, username, user_id, playlist_id, playlist_name, channel_id, channel_name, last_checked) 
+                VALUES (:guild_name, :username, :user_id, :playlist_id, :playlist_name, :channel_id, :channel_name, :last_checked)""",  
+                {"guild_name": guild_name, "username": username, "user_id": user_id, "playlist_id": playlist_id, "playlist_name":playlist_name, "channel_id": channel_id, 
+                "channel_name": channel_name, "last_checked": last_checked})
+            except IntegrityError as e:
+                return False
+        return True
+
         
     def update_time(self, channel_id, playlist_id, last_checked):
         with self._connection:
