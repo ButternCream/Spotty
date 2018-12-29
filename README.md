@@ -28,9 +28,13 @@
 !link <id> - Get the link of a playlist you are tracking. Get id from !tracking
 ```
 
-### How to setup :question:
-1. Make a role called 'Spotty Admin'
-2. Assign the role to yourself and whoever you want to be able to use !track
+### How To Use :question:
+1. Clone repo
+2. pip install -r requirements.txt
+3. Configure a config.py file (see below)
+4. Add the bot to your server and make sure it has permission to send messages
+5. Make a role called 'Spotty Admin'
+6. Assign the role to yourself and whoever you want to be able to use the !track command
 
 Until I figure out a better way of handling permissions, this is how it works so everyone cant !track
 
