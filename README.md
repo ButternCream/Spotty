@@ -11,7 +11,8 @@
 ### *Todo*
 - Wait for spotify webhooks
 - Exception handling for the database
-- Better permissions for things like !stop
+- Better permissions for things like !stop and !track
+- Limit the channels in which !track can be called
 - !tracking - returns the unique db id of an entry along with the playlist name :heavy_check_mark:
 - !stop :id: - Stop tracking the specified playlist. Where id will be the specified unique id from !tracking :heavy_check_mark:
 - !random :id: - Randomly pick a song from the specific playlist
@@ -26,6 +27,12 @@
 !stopall - Removes ALL of your tracking entries in the database
 !delay <new-delay> - Sets or returns the delay between fetches (in seconds). <new-delay> is optional
 ```
+
+### How to setup
+1. Make a role called 'Spotty Admin'
+2. Assign the role to yourself and whoever you want to be able to !track
+
+Until I figure out a better way of handling permissions, this is how it works so everyone cant !track
 
 ### My Config File
 ```python
