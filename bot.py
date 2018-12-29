@@ -24,6 +24,7 @@ class Spotty(discord.Client):
 
 	async def on_message(self, message):
 		if message.author == self.user: return
+		roles = [role.name.lower() for role in message.author.roles]
 
 		user_id = message.author.id
 		username = message.author.name
@@ -43,6 +44,7 @@ class Spotty(discord.Client):
 			split = message.content.split(' ')
 			if len(split) != 2:
 				return await message.channel.send("Usage: !track <playlist-url>")
+			if 'spotty admin' not in roles: return await warn_user(message.channel)
 			playlist_id = await extract_playlist_id(split[1])
 			playlist_name = await fetch_playlist_name(spotify_user_id, playlist_id)
 			self._dbpointer.insert(username, user_id, playlist_id, playlist_name, channel_id, channel_name, get_current_time(as_string=True))
@@ -54,10 +56,12 @@ class Spotty(discord.Client):
 				await message.channel.send(row) 
 
 		elif message.content.startswith("!stopall"):
+			if 'spotty admin' not in roles: return await warn_user(message.channel)
 			self._dbpointer.delete_all(user_id) 
 			await message.channel.send('Removed all playlists you were tracking from the database.')
 
 		elif message.content.startswith("!stop"):
+			if 'spotty admin' not in roles: return await warn_user(message.channel)
 			split = message.content.split(' ')
 			if len(split) > 1:
 				id = int(split[1])
@@ -117,6 +121,10 @@ class Spotty(discord.Client):
 		:return: The name of the channel
 		"""
 		return self.get_channel(channel_id).name
+	
+
+async def warn_user(channel):
+	await channel.send("Hmmm you shouldn't do that :no_good:")
 
 async def extract_playlist_id(string):
 	"""
