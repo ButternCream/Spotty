@@ -54,6 +54,10 @@ class DatabasePointer(object):
     def delete_by_channel_id(self, channel_id):
         with self._connection:
             self._cursor.execute("DELETE FROM playlists WHERE channel_id=:channel_id", {"channel_id": channel_id})
+            
+    def delete_by_unique_id(self, u_id):
+        with self._connection:
+            self._cursor.execute("DELETE FROM playlists WHERE u_id=:u_id", {"u_id": u_id})
 
     """ Fetching """
     def fetch_all(self):
@@ -73,5 +77,9 @@ class DatabasePointer(object):
         return self._cursor.fetchall()
     
     def fetch_playlists_by_channel_id(self,id):
-        self._cursor.execute("SELECT playlist_name FROM playlists WHERE channel_id=:id", {"id": id})
+        self._cursor.execute("SELECT u_id, playlist_name FROM playlists WHERE channel_id=:id", {"id": id})
         return self._cursor.fetchall()
+    
+    def fetch_name_by_unique_id(self,id):
+        self._cursor.execute("SELECT playlist_name FROM playlists WHERE u_id=:id", {"id": id})
+        return self._cursor.fetchone()

@@ -35,8 +35,8 @@ class Spotty(discord.Client):
 			if len(data) == 0:
 				return await message.channel.send("#{0} is not currently tracking any playlists.")
 			string = "Channel is currently tracking:\n"
-			for (name) in data:
-				string += "- %s\n" % name
+			for (id, name) in data:
+				string += "%d - %s\n" % (id, name)
 			await message.channel.send(string) 
 
 		elif message.content.startswith("!track"):
@@ -55,13 +55,20 @@ class Spotty(discord.Client):
 
 		elif message.content.startswith("!stopall"):
 			self._dbpointer.delete_all(user_id) 
-			await message.channel.send('Removed all playlists you were tracking.')
+			await message.channel.send('Removed all playlists you were tracking from the database.')
 
 		elif message.content.startswith("!stop"):
+			split = message.content.split(' ')
+			if len(split) > 1:
+				id = int(split[1])
+				name = self._dbpointer.fetch_name_by_unique_id(id)[0]
+				self._dbpointer.delete_by_unique_id(id)
+				return await message.channel.send("Stopped tracking '{0}'.".format(name)) 
 			self._dbpointer.delete_by_channel_id(channel_id)
-			await message.channel.send('#{0} has stopped tracking playlists.'.format(channel_name))
+			await message.channel.send('#{0} has stopped tracking all playlists.'.format(channel_name))
 
 		elif message.content.startswith("!delay"):
+			if user_id != self.__master: return
 			split = message.content.split(' ')
 			if len(split) == 1:
 				return await message.channel.send("**Current delay is %s**" % str(self.__delay))
