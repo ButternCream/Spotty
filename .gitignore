@@ -71,3 +71,4 @@ db/
 __pycache__/
 .idea/
 .vscode/
+*.log

@@ -13,9 +13,10 @@
 - Exception handling for the database :x:
 - Better permissions for things like !stop and !track :x:
 - Limit the channels in which !track can be called :x:
+- !random :id: - Randomly pick a song from the specific playlist :x:
 - !tracking - returns the unique db id of an entry along with the playlist name :heavy_check_mark:
 - !stop :id: - Stop tracking the specified playlist. Where id will be the specified unique id from !tracking :heavy_check_mark:
-- !random :id: - Randomly pick a song from the specific playlist :x:
+- !link :id: - Get the link of the specified playlist. id from !tracking :heavy_check_mark:
 - more tbd
 
 ### Commands :exclamation:
