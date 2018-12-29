@@ -68,3 +68,6 @@ fabric.properties
 # Custom
 config.py
 db/
+__pycache__/
+.idea
+.vscode
