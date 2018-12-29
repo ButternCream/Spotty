@@ -1,6 +1,7 @@
 import spotipy
 import spotipy.oauth2 as oauth2
 import discord
+from discord.ext import commands
 import asyncio
 import datetime
 from database import DatabasePointer
@@ -10,80 +11,98 @@ import time
 
 # Fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246
 
-class Spotty(discord.Client):
+class Spotty(commands.Bot):
 	def __init__(self, *args, **kwargs):
-		super().__init__(*args,**kwargs)
+		super().__init__(command_prefix='!')
 		self.__fetch_task = self.loop.create_task(self.fetch_all())
 		self.__delay = delay
 		self.__master = master_id
 		self._dbpointer = DatabasePointer(location=db_location)
+		self.register_commands()
+
+	def register_commands(self):
+		self.add_command(self.tracking)
+		self.add_command(self.track)
+		self.add_command(self.me)
+		self.add_command(self.stopall)
+		self.add_command(self.stop)
+
+	@commands.command()
+	async def tracking(self, ctx):
+		message = ctx.message
+		channel_id = message.channel.id
+		channel_name = await self.get_channel_name(channel_id)
+
+		data = self._dbpointer.fetch_playlists_by_channel_id(channel_id)
+		if len(data) == 0:
+			return await ctx.send(bold("#{0} is not currently tracking any playlists.".format(channel_name)))
+		string = "Channel is currently tracking:\n"
+		for (id, name) in data:
+			string += "%d - %s\n" % (id, name)
+		await ctx.send(string) 
+
+	@commands.command()
+	async def track(self, ctx):
+		message = ctx.message
+
+		roles = [role.name.lower() for role in message.author.roles]
+		user_id = message.author.id
+		username = message.author.name
+		channel_id = message.channel.id
+		channel_name = await self.get_channel_name(channel_id)
+
+		split = message.content.split(' ')
+		if len(split) != 2:
+			return await ctx.send(bold("Usage: !track <playlist-url>"))
+		if 'spotty admin' not in roles: return await warn_user(message.channel)
+		playlist_id = await extract_playlist_id(split[1])
+		playlist_name = await fetch_playlist_name(spotify_user_id, playlist_id)
+		self._dbpointer.insert(username, user_id, playlist_id, playlist_name, channel_id, channel_name, get_current_time(as_string=True))
+		await ctx.send(bold("#{0} is now tracking the playlist '{1}'".format(channel_name, playlist_name)))
+
+	@commands.command()
+	@commands.is_owner()
+	async def me(self, ctx):
+		message = ctx.message
+		user_id = message.author.id
+		for row in self._dbpointer.fetch_by_user_id(user_id):
+			await ctx.send(row) 
+
+	@commands.command()
+	async def stopall(self, ctx):
+		message = ctx.message
+		user_id = message.author.id
+		if 'spotty admin' not in roles: return await warn_user(message.channel)
+		self._dbpointer.delete_all(user_id) 
+		await ctx.send(bold('Removed all playlists you were tracking from the database.'))
+
+	@commands.command()
+	async def stop(self, ctx):
+		message = ctx.message
+		roles = [role.name.lower() for role in message.author.roles]
+		user_id = message.author.id
+		channel_id = message.channel.id
+		channel_name = await self.get_channel_name(channel_id)
+
+		if 'spotty admin' not in roles: return await warn_user(message.channel)
+		split = message.content.split(' ')
+		if len(split) > 1:
+			id = int(split[1])
+			owner_id = int(self._dbpointer.get_user_id_for_unique_id(id)[0])
+			if owner_id != user_id:
+				return await ctx.send("Hmmm you shouldn't do that :no_good:")
+			name = self._dbpointer.fetch_name_by_unique_id(id)[0]
+			self._dbpointer.delete_by_unique_id(id)
+			return await ctx.send(bold("#{1} has stopped tracking '{0}'.".format(name, channel_name))) 
+		self._dbpointer.delete_by_channel_id(channel_id)
+		await ctx.send(bold('#{0} has stopped tracking all playlists.'.format(channel_name)))
 
 	async def on_ready(self):
 		print('We have logged in as {0.user}'.format(self))
 		await discord_client.change_presence(activity=discord.Game(name="Spotify"))
 
 	async def on_message(self, message):
-		if message.author == self.user: return
-		roles = [role.name.lower() for role in message.author.roles]
-
-		user_id = message.author.id
-		username = message.author.name
-		channel_id = message.channel.id
-		channel_name = await self.get_channel_name(channel_id)
-
-		if message.content.startswith("!tracking"):
-			data = self._dbpointer.fetch_playlists_by_channel_id(channel_id)
-			if len(data) == 0:
-				return await message.channel.send("#{0} is not currently tracking any playlists.".format(channel_name))
-			string = "Channel is currently tracking:\n"
-			for (id, name) in data:
-				string += "%d - %s\n" % (id, name)
-			await message.channel.send(string) 
-
-		elif message.content.startswith("!track"):
-			split = message.content.split(' ')
-			if len(split) != 2:
-				return await message.channel.send("Usage: !track <playlist-url>")
-			if 'spotty admin' not in roles: return await warn_user(message.channel)
-			playlist_id = await extract_playlist_id(split[1])
-			playlist_name = await fetch_playlist_name(spotify_user_id, playlist_id)
-			self._dbpointer.insert(username, user_id, playlist_id, playlist_name, channel_id, channel_name, get_current_time(as_string=True))
-			await message.channel.send("#{0} is now tracking the playlist '{1}'".format(channel_name, playlist_name))
-
-		elif message.content.startswith("!me"):
-			if user_id != self.__master: return
-			for row in self._dbpointer.fetch_by_user_id(user_id):
-				await message.channel.send(row) 
-
-		elif message.content.startswith("!stopall"):
-			if 'spotty admin' not in roles: return await warn_user(message.channel)
-			self._dbpointer.delete_all(user_id) 
-			await message.channel.send('Removed all playlists you were tracking from the database.')
-
-		elif message.content.startswith("!stop"):
-			if 'spotty admin' not in roles: return await warn_user(message.channel)
-			split = message.content.split(' ')
-			if len(split) > 1:
-				id = int(split[1])
-				owner_id = int(self._dbpointer.get_user_id_for_unique_id(id)[0])
-				if owner_id != user_id:
-					return await message.channel.send("Hmmm you shouldn't do that :no_good:")
-				name = self._dbpointer.fetch_name_by_unique_id(id)[0]
-				self._dbpointer.delete_by_unique_id(id)
-				return await message.channel.send("Stopped tracking '{0}'.".format(name)) 
-			self._dbpointer.delete_by_channel_id(channel_id)
-			await message.channel.send('#{0} has stopped tracking all playlists.'.format(channel_name))
-
-		elif message.content.startswith("!delay"):
-			if user_id != self.__master: return
-			split = message.content.split(' ')
-			if len(split) == 1:
-				return await message.channel.send("**Current delay is %s**" % str(self.__delay))
-			elif len(split) == 2:
-				new_delay = int(split[1])
-				self.__delay = new_delay
-			else:
-				await message.channel.send("**Usage: !delay or !delay <seconds>**")
+		await self.process_commands(message)
 
 	async def fetch(self, channel_id, playlist_id, playlist_name, last_checked):
 		"""
@@ -122,6 +141,9 @@ class Spotty(discord.Client):
 		"""
 		return self.get_channel(channel_id).name
 	
+
+def bold(string):
+	return '**'+string+'**'
 
 async def warn_user(channel):
 	await channel.send("Hmmm you shouldn't do that :no_good:")
