@@ -44,7 +44,6 @@ client_secret = os.getenv('SPOTIFY_SECRET')
 spotty_token = os.getenv('SPOTTY_TOKEN')
 
 delay = 20
-master_id = your discord id
 db_location = r'db/spotty.db' # Local db
 
 spotify_user_id = 'your user id'

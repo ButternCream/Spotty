@@ -16,7 +16,6 @@ class Spotty(commands.Bot):
 		super().__init__(command_prefix='!')
 		self.__fetch_task = self.loop.create_task(self.fetch_all())
 		self.__delay = delay
-		self.__master = master_id
 		self._dbpointer = DatabasePointer(location=db_location)
 		self.register_commands()
 
