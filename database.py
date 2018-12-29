@@ -83,3 +83,7 @@ class DatabasePointer(object):
     def fetch_name_by_unique_id(self,id):
         self._cursor.execute("SELECT playlist_name FROM playlists WHERE u_id=:id", {"id": id})
         return self._cursor.fetchone()
+    
+    def get_user_id_for_unique_id(self, u_id):
+        self._cursor.execute("SELECT user_id FROM playlists WHERE u_id=:u_id", {"u_id": u_id})
+        return self._cursor.fetchone()

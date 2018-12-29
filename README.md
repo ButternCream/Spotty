@@ -12,6 +12,7 @@
 - ~~Instead of saving the entire playlist in a set :scream:, simply save the last time checked. Then filter the next fetch based on the previous time.~~
 - Wait for spotify webhooks
 - Exception handling for the database
+- Permissions for things like !stop
 - !tracking - returns the unique db id of an entry along with the playlist name :heavy_check_mark:
 - !stop :id: - Stop tracking the specified playlist. Where id will be the specified unique id from !tracking :heavy_check_mark:
 - !random :id: - Randomly pick a song from the specific playlist

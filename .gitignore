@@ -69,5 +69,5 @@ fabric.properties
 config.py
 db/
 __pycache__/
-.idea
-.vscode
+.idea/
+.vscode/

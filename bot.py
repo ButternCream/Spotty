@@ -61,6 +61,9 @@ class Spotty(discord.Client):
 			split = message.content.split(' ')
 			if len(split) > 1:
 				id = int(split[1])
+				owner_id = int(self._dbpointer.get_user_id_for_unique_id(id)[0])
+				if owner_id != user_id:
+					return await message.channel.send("Hmmm you shouldn't do that :no_good:")
 				name = self._dbpointer.fetch_name_by_unique_id(id)[0]
 				self._dbpointer.delete_by_unique_id(id)
 				return await message.channel.send("Stopped tracking '{0}'.".format(name)) 
