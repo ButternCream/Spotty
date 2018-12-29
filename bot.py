@@ -33,7 +33,7 @@ class Spotty(discord.Client):
 		if message.content.startswith("!tracking"):
 			data = self._dbpointer.fetch_playlists_by_channel_id(channel_id)
 			if len(data) == 0:
-				return await message.channel.send("#{0} is not currently tracking any playlists.")
+				return await message.channel.send("#{0} is not currently tracking any playlists.".format(channel_name))
 			string = "Channel is currently tracking:\n"
 			for (id, name) in data:
 				string += "%d - %s\n" % (id, name)
