@@ -30,7 +30,7 @@
 
 ### How to setup
 1. Make a role called 'Spotty Admin'
-2. Assign the role to yourself and whoever you want to be able to !track
+2. Assign the role to yourself and whoever you want to be able to use !track
 
 Until I figure out a better way of handling permissions, this is how it works so everyone cant !track
 
