@@ -9,7 +9,6 @@
 ![WithDB](https://i.imgur.com/nP1H8Sx.png)
 
 ### *Todo*
-- ~~Instead of saving the entire playlist in a set :scream:, simply save the last time checked. Then filter the next fetch based on the previous time.~~
 - Wait for spotify webhooks
 - Exception handling for the database
 - Better permissions for things like !stop
