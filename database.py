@@ -20,6 +20,7 @@ class DatabasePointer(object):
             self._cursor.execute("""CREATE TABLE IF NOT EXISTS playlists (
              u_id INTEGER PRIMARY KEY,
              guild_name TEXT,
+             guild_id TEXT,
              username TEXT,
              user_id TEXT,
              playlist_id TEXT,
@@ -30,12 +31,12 @@ class DatabasePointer(object):
              UNIQUE(playlist_id, channel_id)
              )""")
 
-    def insert(self, guild_name, username, user_id, playlist_id, playlist_name, channel_id, channel_name, last_checked):
+    def insert(self, guild_name, guild_id, username, user_id, playlist_id, playlist_name, channel_id, channel_name, last_checked):
         with self._connection:
             try:
-                self._cursor.execute("""INSERT INTO playlists (guild_name, username, user_id, playlist_id, playlist_name, channel_id, channel_name, last_checked) 
-                VALUES (:guild_name, :username, :user_id, :playlist_id, :playlist_name, :channel_id, :channel_name, :last_checked)""",  
-                {"guild_name": guild_name, "username": username, "user_id": user_id, "playlist_id": playlist_id, "playlist_name":playlist_name, "channel_id": channel_id, 
+                self._cursor.execute("""INSERT INTO playlists (guild_name, guild_id, username, user_id, playlist_id, playlist_name, channel_id, channel_name, last_checked) 
+                VALUES (:guild_name, :guild_id, :username, :user_id, :playlist_id, :playlist_name, :channel_id, :channel_name, :last_checked)""",  
+                {"guild_name": guild_name, "guild_id": guild_id, "username": username, "user_id": user_id, "playlist_id": playlist_id, "playlist_name":playlist_name, "channel_id": channel_id, 
                 "channel_name": channel_name, "last_checked": last_checked})
             except IntegrityError as e:
                 return False
@@ -97,3 +98,8 @@ class DatabasePointer(object):
     def get_playlist_id_by_unique_id(self, u_id):
         self._cursor.execute("SELECT playlist_id FROM playlists WHERE u_id=:u_id", {"u_id": u_id})
         return self._cursor.fetchone()
+
+# TODO
+class DatabseEntry(object):
+    def __init__(self, **data):
+        self.data = data
