@@ -4,14 +4,14 @@ import discord
 from discord.ext import commands
 import asyncio
 import datetime
-from database import DatabasePointer
+from database import DatabasePointer, DatabseEntry
 from config import *
 import re
 import time
 import logging
-logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.INFO, format=' %(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.ERROR, format=' %(asctime)s - %(levelname)s - %(message)s')
 
-# Fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246
+# Spotify fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246
 
 # discord.abc.GuildChannel -> category [CategoryChannel]
 # discord.CategoryChannel -> name, channels
@@ -30,13 +30,16 @@ class Spotty(commands.Bot):
 		self.add_command(self.tracking)
 		self.add_command(self.track)
 		self.add_command(self.me)
-		self.add_command(self.stopall)
+		self.add_command(self.purgeme)
 		self.add_command(self.stop)
 		self.add_command(self.link)
+
+	""" Owner Only Commands """
 
 	@commands.command()
 	@commands.is_owner()
 	async def test(self, ctx):
+		""" This is a test command """
 		message = ctx.message
 		await ctx.send(message.author, "Hi")
 		guild = message.guild
@@ -54,69 +57,102 @@ class Spotty(commands.Bot):
 		logging.info(music_channels)
 
 	@commands.command()
+	@commands.is_owner()
+	async def me(self, ctx):
+		""" Get database entries associated with you """
+		user_id = ctx.author.id
+		for row in self._dbpointer.fetch_by_user_id(user_id):
+			await ctx.send(row) 
+
+	""" Everyone Commands """
+
+	@commands.command()
+	@commands.guild_only()
 	async def link(self, ctx):
+		""" 
+		Usage: !link <id>
+		Gets the link of the specified playlist id 
+		"""
 		split = ctx.message.content.split(' ')
 		if len(split) != 2:
-			return await ctx.send(bold("Usage: !link <id>"))
+			return await ctx.send("Usage: !link <id>")
 		id = self._dbpointer.get_playlist_id_by_unique_id(split[1])[0]
 		url = await fetch_playlist_link(spotify_user_id, id)
 		await ctx.send(url)
 
 	@commands.command()
+	@commands.guild_only()
 	async def tracking(self, ctx):
+		""" 
+		Usage: !tracking
+		Shows what the current channel is tracking. <playlist-name> - <id>
+		"""
 		channel_id = ctx.channel.id
-		channel_name = await self.get_channel_name(channel_id)
+		channel_name = ctx.channel.name
 
 		data = self._dbpointer.fetch_playlists_by_channel_id(channel_id)
 		if len(data) == 0:
-			return await ctx.send(bold("#{0} is not currently tracking any playlists.".format(channel_name)))
+			return await ctx.send("#{0} is not currently tracking any playlists.".format(channel_name))
 		string = "Channel is currently tracking:\n"
 		for (id, name) in data:
 			string += "'%s' - ID: %d\n" % (name, id)
 		await ctx.send(string) 
 
+	""" Admin Commands """
+
 	@commands.command()
+	@commands.guild_only()
+	@commands.has_role("Spotty Admin")
 	async def track(self, ctx):
+		""" 
+		Usage: !track <playlist-id or link> 
+		Tracks the specified playlist in the channel its called in 
+		"""
 		roles = [role.name.lower() for role in ctx.author.roles]
 		user_id = ctx.author.id
 		username = ctx.author.name
 		channel_id = ctx.channel.id
-		channel_name = await self.get_channel_name(channel_id)
+		channel_name = ctx.channel.name
 		guild_name = ctx.guild.name
+		guild_id = ctx.guild.id
 
 		split = ctx.message.content.split(' ')
 		if len(split) != 2:
-			return await ctx.send(bold("Usage: !track <playlist-url>"))
-		if 'spotty admin' not in roles: return await warn_user(ctx.channel)
+			return await ctx.send("Usage: !track <playlist-url>")
 		playlist_id = await extract_playlist_id(split[1])
 		playlist_name = await fetch_playlist_name(spotify_user_id, playlist_id)
-		if not self._dbpointer.insert(guild_name,username, user_id, playlist_id, playlist_name, channel_id, channel_name, get_current_time(as_string=True)):
+		if not self._dbpointer.insert(guild_name, guild_id, username, user_id, playlist_id, playlist_name, channel_id, channel_name, get_current_time(as_string=True)):
 			return await ctx.send("The channel #{0} already tracking {1}?".format(channel_name, playlist_name))
-		await ctx.send(bold("#{0} is now tracking the playlist '{1}'".format(channel_name, playlist_name)))
+		await ctx.send("#{0} is now tracking the playlist '{1}'".format(channel_name, playlist_name))
 
 	@commands.command()
-	@commands.is_owner()
-	async def me(self, ctx):
-		user_id = ctx.author.id
-		for row in self._dbpointer.fetch_by_user_id(user_id):
-			await ctx.send(row) 
-
-	@commands.command()
-	async def stopall(self, ctx):
+	@commands.guild_only()
+	@commands.has_role("Spotty Admin")
+	async def purgeme(self, ctx):
+		""" 
+		Usage: !purgeme
+		Removes ALL database entries associated with you. 
+		This will remove everything, i.e anywhere (can be other servers and channels) you called !track
+		If you want to stop a single channel from tracking use !stop
+		"""
 		roles = [role.name.lower() for role in ctx.author.roles]
 		user_id = ctx.author.id
-		if 'spotty admin' not in roles: return await warn_user(ctx.channel)
 		self._dbpointer.delete_all(user_id) 
-		await ctx.send(bold('Removed all playlists you were tracking from the database.'))
+		await ctx.send('Removed all playlists you were tracking from the database.')
 
 	@commands.command()
+	@commands.guild_only()
+	@commands.has_role("Spotty Admin")
 	async def stop(self, ctx):
+		""" 
+		Usage: !stop <(optional) id> 
+		Stops tracking the specified playlist or stops tracking all playlists in a channel 
+		"""
 		roles = [role.name.lower() for role in ctx.author.roles]
 		user_id = ctx.author.id
 		channel_id = ctx.channel.id
-		channel_name = await self.get_channel_name(channel_id)
+		channel_name = ctx.channel.name
 
-		if 'spotty admin' not in roles: return await warn_user(ctx.channel)
 		split = ctx.message.content.split(' ')
 		if len(split) > 1:
 			id = int(split[1])
@@ -125,16 +161,11 @@ class Spotty(commands.Bot):
 				return await ctx.send("Hmmm you shouldn't do that :no_good:")
 			name = self._dbpointer.fetch_name_by_unique_id(id)[0]
 			self._dbpointer.delete_by_unique_id(id)
-			return await ctx.send(bold("#{1} has stopped tracking '{0}'.".format(name, channel_name))) 
+			return await ctx.send("#{1} has stopped tracking '{0}'.".format(name, channel_name))
 		self._dbpointer.delete_by_channel_id(channel_id)
-		await ctx.send(bold('#{0} has stopped tracking all playlists.'.format(channel_name)))
+		await ctx.send('#{0} has stopped tracking all playlists.'.format(channel_name))
 
-	async def on_ready(self):
-		logging.info('We have logged in as {0.user}'.format(self))
-		await discord_client.change_presence(activity=discord.Game(name="Spotify"))
-
-	async def on_message(self, message):
-		await self.process_commands(message)
+	""" Coroutine Fetch Functions """
 
 	async def fetch(self, channel_id, playlist_id, playlist_name, last_checked):
 		"""
@@ -164,20 +195,15 @@ class Spotty(commands.Bot):
 				await self.fetch(int(channel_id),playlist_id,playlist_name, convert_time(last_checked))
 			await asyncio.sleep(self.__delay)
 
-	async def get_channel_name(self, channel_id):
-		"""
-		Get discord channel name from its id
-		:param channel_id: The channel id as an int
-		:return: The name of the channel
-		"""
-		return self.get_channel(channel_id).name
-	
+	""" Overrides """
 
-def bold(string):
-	return '**'+string+'**'
+	async def on_ready(self):
+		logging.info('We have logged in as {0.user}'.format(self))
+		print('We have logged in as {0.user}'.format(self))
+		await discord_client.change_presence(activity=discord.Game(name="Spotify"))
 
-async def warn_user(channel):
-	await channel.send("Hmmm you shouldn't do that :no_good:")
+	async def on_message(self, message):
+		await self.process_commands(message)
 
 async def extract_playlist_id(string):
 	"""
@@ -227,6 +253,12 @@ async def fetch_playlist_name(username, playlist_id):
 	return result['name']
 
 async def fetch_playlist_link(username, playlist_id):
+	"""
+	Fetches a playlist for new songs
+	:param username: Spotify username / id
+	:param playlist_id: The playlist id
+	:return: The URL of the playlist
+	"""
 	result = spotify.user_playlist(username, playlist_id)
 	return result['external_urls']['spotify']
 
@@ -234,7 +266,8 @@ async def fetch_playlist(username, playlist_id, previous_date):
 	"""
 	Fetches a playlist for new songs
 	:param username: Spotify username / id
-	:param playlist_id:
+	:param playlist_id: The playlist id
+	:param previous_date: The last time fetched
 	:return: A list of URLs of the new songs
 	"""
 	results = spotify.user_playlist(username, playlist_id, fields='tracks,next,name')
