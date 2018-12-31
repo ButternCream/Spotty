@@ -1,8 +1,7 @@
 """ TODO """
 """ Custom Command Check Failures """
 from discord.ext import commands
-class CategoryCheckFailure(commands.CheckFailure): pass
-class ChannelCheckFailure(commands.CheckFailure): pass
+class PermissionCheckFailure(commands.CheckFailure): pass
 
 """  
 Cleaner way for one function to handle multiple bot command errors 

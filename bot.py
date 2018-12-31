@@ -9,6 +9,7 @@ from config import *
 import re
 import time
 import logging
+from utils import handle_errors
 logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.ERROR, format=' %(asctime)s - %(levelname)s - %(message)s')
 
 # Spotify fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246
@@ -204,6 +205,13 @@ class Spotty(commands.Bot):
 
 	async def on_message(self, message):
 		await self.process_commands(message)
+
+
+	""" Error Handling """
+	@handle_errors(track.error, purgeme.error, stop.error)
+	async def perm_error(self, ctx, error):
+		if isinstance(error, commands.CheckFailure):
+			await ctx.send("Sorry you cant do that :no_good:")
 
 async def extract_playlist_id(string):
 	"""
