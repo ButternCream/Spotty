@@ -14,6 +14,7 @@
 - Better permissions for things like !stop and !track :x:
 - Limit the channels in which !track can be called :x:
 - !random :id: - Randomly pick a song from the specific playlist :x:
+- !where - List the channels in the server that are tracking playlists :x:
 - !tracking - returns the unique db id of an entry along with the playlist name :heavy_check_mark:
 - !stop :id: - Stop tracking the specified playlist. Where id will be the specified unique id from !tracking :heavy_check_mark:
 - !link :id: - Get the link of the specified playlist. id from !tracking :heavy_check_mark:
@@ -21,11 +22,11 @@
 
 ### Commands :exclamation:
 ```
+!help - As you'd expect
 !track <playlist-id or url> - Will post new songs added to the playlist in the discord channel you use this command in (see image above)
-!tracking - List the names of what the current channel is tracking
-!me - print out database entries associated with your discord id (master_id in config.py) (debugging purposes)
+!tracking - List the names and ids of what the current channel is tracking
 !stop <id> - Stop the current channel from tracking anything or a specific playlist if the id from !tracking is specified
-!stopall - Removes ALL of your tracking entries in the database
+!purgeme - Removes ALL of your tracking entries in the database
 !link <id> - Get the link of a playlist you are tracking. Get id from !tracking
 ```
 
