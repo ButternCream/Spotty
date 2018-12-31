@@ -65,6 +65,22 @@ class Spotty(commands.Bot):
 		for row in self._dbpointer.fetch_by_user_id(user_id):
 			await ctx.send(row) 
 
+	@commands.command()
+	@commands.is_owner()
+	async def delay(self, ctx):
+		"""
+		Usage: !delay <seconds> or !delay
+		Sets the delay
+		"""
+		split = ctx.message.content.split(' ')
+		if len(split) == 1:
+			return await ctx.send("Current delay is %s" % str(self.__delay))
+		elif len(split) == 2:
+			new_delay = int(split[1])
+			self.__delay = new_delay
+		else:
+			await ctx.send("Usage: !delay or !delay <seconds>")
+
 	""" Everyone Commands """
 
 	@commands.command()
@@ -201,7 +217,7 @@ class Spotty(commands.Bot):
 	async def on_ready(self):
 		logging.info('We have logged in as {0.user}'.format(self))
 		print('We have logged in as {0.user}'.format(self))
-		await discord_client.change_presence(activity=discord.Game(name="Spotify"))
+		await discord_client.activity(activity=discord.Game(name="Spotify", type=discord.ActivityType.listening))
 
 	async def on_message(self, message):
 		await self.process_commands(message)
