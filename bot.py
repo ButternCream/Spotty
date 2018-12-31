@@ -34,6 +34,7 @@ class Spotty(commands.Bot):
 		self.add_command(self.purgeme)
 		self.add_command(self.stop)
 		self.add_command(self.link)
+		self.add_command(self.delay)
 
 	""" Owner Only Commands """
 
