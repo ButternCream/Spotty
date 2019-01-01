@@ -31,7 +31,7 @@ class Decorators:
 			current_channel = ctx.channel
 			category_names = list(map(__lower, category_names))
 			if current_channel.category.name.lower() in category_names:
-				raise CategoryCheckFailure("Sorry you are not allowed to do that here :no_good:")
+				raise PermissionCheckFailure("Sorry you are not allowed to do that here :no_good:")
 			return True
 		return commands.check(predicate)
 	
@@ -42,6 +42,15 @@ class Decorators:
 			current_channel = ctx.channel
 			channel_names = list(map(__lower, channel_names))
 			if ctx.channel.name.lower() not in channel_names:
-				raise ChannelCheckFailure("Sorry you are not allowed to do that here :no_good:")
+				raise PermissionCheckFailure("Sorry you are not allowed to do that here :no_good:")
 			return True
 		return commands.check(predicate)
+
+	""" Decorator for checking if guild owner """
+	def guild_owner():
+		async def predicate(ctx):
+			if ctx.author != ctx.guild.owner:
+				raise PermissionCheckFailure("Sorry you are not allowed to do that :no_good:")
+			return True
+		return commands.check(predicate)
+			
