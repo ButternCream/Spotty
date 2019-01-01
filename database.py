@@ -31,40 +31,38 @@ class DatabasePointer(object):
              UNIQUE(playlist_id, channel_id)
              )""")
 
-    def insert(self, guild_name, guild_id, username, user_id, playlist_id, playlist_name, channel_id, channel_name, last_checked):
+    def insert(self, values):
         with self._connection:
             try:
                 self._cursor.execute("""INSERT INTO playlists (guild_name, guild_id, username, user_id, playlist_id, playlist_name, channel_id, channel_name, last_checked) 
-                VALUES (:guild_name, :guild_id, :username, :user_id, :playlist_id, :playlist_name, :channel_id, :channel_name, :last_checked)""",  
-                {"guild_name": guild_name, "guild_id": guild_id, "username": username, "user_id": user_id, "playlist_id": playlist_id, "playlist_name":playlist_name, "channel_id": channel_id, 
-                "channel_name": channel_name, "last_checked": last_checked})
+                VALUES (:guild_name, :guild_id, :username, :user_id, :playlist_id, :playlist_name, :channel_id, :channel_name, :last_checked)""", values)
             except IntegrityError as e:
                 return False
         return True
 
         
-    def update_time(self, channel_id, playlist_id, last_checked):
+    def update_time(self, values):
         with self._connection:
             self._cursor.execute("""
                     UPDATE playlists SET last_checked = :last_checked WHERE playlist_id = :pid AND channel_id = :channel_id
-            """, {"last_checked": last_checked, "pid": playlist_id, "channel_id": channel_id})
+            """, values)
 
-    def delete_by_name(self, user_id, playlist_name):
+    def delete_by_name(self, values):
         with self._connection:
             self._cursor.execute("DELETE FROM playlists WHERE user_id=:user_id AND playlist_name=:playlist_name",
-            {"user_id": user_id, "playlist_name": playlist_name})
+            values)
 
-    def delete_all(self, user_id):
+    def delete_all(self, values):
         with self._connection:
-            self._cursor.execute("DELETE FROM playlists WHERE user_id=:user_id", {"user_id": user_id})
+            self._cursor.execute("DELETE FROM playlists WHERE user_id=:user_id", values)
     
-    def delete_by_channel_id(self, channel_id):
+    def delete_by_channel_id(self, value):
         with self._connection:
-            self._cursor.execute("DELETE FROM playlists WHERE channel_id=:channel_id", {"channel_id": channel_id})
+            self._cursor.execute("DELETE FROM playlists WHERE channel_id=:channel_id", value)
             
-    def delete_by_unique_id(self, u_id):
+    def delete_by_unique_id(self, value):
         with self._connection:
-            self._cursor.execute("DELETE FROM playlists WHERE u_id=:u_id", {"u_id": u_id})
+            self._cursor.execute("DELETE FROM playlists WHERE u_id=:u_id", value)
 
     """ Fetching """
     def fetch_all(self):
