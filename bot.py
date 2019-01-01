@@ -9,7 +9,7 @@ from config import *
 import re
 import time
 import logging
-from utils import handle_errors
+from utils import Decorators
 logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.ERROR, format=' %(asctime)s - %(levelname)s - %(message)s')
 
 # Spotify fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246
@@ -42,21 +42,22 @@ class Spotty(commands.Bot):
 	@commands.is_owner()
 	async def test(self, ctx):
 		""" This is a test command """
-		message = ctx.message
-		await ctx.send(message.author, "Hi")
-		guild = message.guild
-		channels = guild.channels
-		categories = {channel.category.name if channel.category else None for channel in channels}
-		roles = guild.roles
-		members = some_role.members
-		music_channels = list()
-		for channel in channels:
-			if channel.category is None: continue
-			if channel.category.name == 'Music':
-				music_channels.append(channel.name)
-		logging.info(guild.name)
-		logging.info(categories)
-		logging.info(music_channels)
+		# message = ctx.message
+		# await ctx.send(message.author, "Hi")
+		# guild = message.guild
+		# channels = guild.channels
+		# categories = {channel.category.name if channel.category else None for channel in channels}
+		# roles = guild.roles
+		# members = some_role.members
+		# music_channels = list()
+		# for channel in channels:
+		# 	if channel.category is None: continue
+		# 	if channel.category.name == 'Music':
+		# 		music_channels.append(channel.name)
+		# logging.info(guild.name)
+		# logging.info(categories)
+		# logging.info(music_channels)
+		await ctx.send("Testing")
 
 	@commands.command()
 	@commands.is_owner()
@@ -120,7 +121,7 @@ class Spotty(commands.Bot):
 
 	@commands.command()
 	@commands.guild_only()
-	@commands.has_role("Spotty Admin")
+	@Decorators.guild_owner_or_spotty_role()
 	async def track(self, ctx):
 		""" 
 		Usage: !track <playlist-id or link> 
@@ -145,7 +146,7 @@ class Spotty(commands.Bot):
 
 	@commands.command()
 	@commands.guild_only()
-	@commands.has_role("Spotty Admin")
+	@Decorators.guild_owner_or_spotty_role()
 	async def purgeme(self, ctx):
 		""" 
 		Usage: !purgeme
@@ -160,7 +161,7 @@ class Spotty(commands.Bot):
 
 	@commands.command()
 	@commands.guild_only()
-	@commands.has_role("Spotty Admin")
+	@Decorators.guild_owner_or_spotty_role()
 	async def stop(self, ctx):
 		""" 
 		Usage: !stop <(optional) id> 
@@ -225,7 +226,7 @@ class Spotty(commands.Bot):
 
 
 	""" Error Handling """
-	@handle_errors(track.error, purgeme.error, stop.error)
+	@Decorators.handle_errors(track.error, purgeme.error, stop.error)
 	async def perm_error(self, ctx, error):
 		if isinstance(error, commands.CheckFailure):
 			await ctx.send("Sorry you cant do that :no_good:")

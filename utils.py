@@ -1,25 +1,6 @@
-""" TODO """
 """ Custom Command Check Failures """
 from discord.ext import commands
 class PermissionCheckFailure(commands.CheckFailure): pass
-
-"""  
-Cleaner way for one function to handle multiple bot command errors 
-
-@handle_errors(test.error, me.error, ...)
-async def test_error(...):
-	...
-
-Instead of
-@test.error
-async def test_error(...):
-	...
-"""
-def handle_errors(*functions):
-	def wrapper(*args, **kwargs):
-		for fn in functions:
-			fn(*args, **kwargs)
-	return wrapper
 
 class Decorators:
 	__lower = lambda x: x.lower()
@@ -46,11 +27,30 @@ class Decorators:
 			return True
 		return commands.check(predicate)
 
-	""" Decorator for checking if guild owner """
-	def guild_owner():
+	""" Decorator for checking if you're guild owner or have the spotty admin role """
+	def guild_owner_or_spotty_role():
 		async def predicate(ctx):
-			if ctx.author != ctx.guild.owner:
-				raise PermissionCheckFailure("Sorry you are not allowed to do that :no_good:")
-			return True
+			roles = [r.name.lower() for r in ctx.author.roles]
+			if ctx.author == ctx.guild.owner or "spotty admin" in roles:
+				return True
+			raise PermissionCheckFailure("Sorry you are not allowed to do that :no_good:")
 		return commands.check(predicate)
+
+	"""  
+	Cleaner way for one function to handle multiple bot command errors 
+
+	@handle_errors(test.error, me.error, ...)
+	async def test_error(...):
+		...
+
+	Instead of
+	@test.error
+	async def test_error(...):
+		...
+	"""
+	def handle_errors(*functions):
+		def wrapper(*args, **kwargs):
+			for fn in functions:
+				fn(*args, **kwargs)
+		return wrapper
 			
