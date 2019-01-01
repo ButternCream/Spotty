@@ -10,17 +10,15 @@ import re
 import time
 import logging
 from utils import Decorators
-logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.ERROR, format=' %(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.WARNING, format=' %(asctime)s - %(levelname)s - %(message)s')
 
 # Spotify fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246
 
-# discord.abc.GuildChannel -> category [CategoryChannel]
-# discord.CategoryChannel -> name, channels
 # https://discordapp.com/oauth2/authorize?scope=bot&permissions=66321471&client_id=<bot-id> (optional)&guild_id=<server-id> Example on how to add with all perms
 
 class Spotty(commands.Bot):
 	def __init__(self, *args, **kwargs):
-		super().__init__(command_prefix='!')
+		super().__init__(command_prefix=('!', '$'))
 		self.__fetch_task = self.loop.create_task(self.fetch_all())
 		self.__delay = delay
 		self._dbpointer = DatabasePointer(location=db_location)
@@ -241,7 +239,7 @@ async def extract_playlist_id(string):
 	result = p.findall(string)
 	if len(result) > 0:
 		return result[0]
-	logging.info('Invalid playlist id or url')
+	logging.error('Invalid playlist id or url')
 
 def convert_time(time_string):
 	"""
@@ -307,7 +305,7 @@ async def fetch_playlist(username, playlist_id, previous_date):
 				if convert_time(item['added_at']) > previous_date:
 					new_songs.append(track_url)
 			except (KeyError, UnicodeEncodeError) as e:
-				logging.info(u'Skipping track {0} by {1} (local only?)'.format(
+				logging.warn(u'Skipping track {0} by {1} (local only?)'.format(
 					track['name'], track['artists'][0]['name']))
 		# 1 page = 50 results
 		# check if there are more pages
