@@ -230,8 +230,12 @@ class Spotty(commands.Bot):
 		Perform a fetch for all database entries
 		:return: None
 		"""
+		global token
+		global spotify
 		await self.wait_until_ready()
 		while not self.is_closed():
+			token = token.refresh_access_token(token)
+			spotify = spotipy.Spotify(auth=token)
 			data = self._dbpointer.fetch_tracking_data()
 			for (playlist_id, playlist_name, channel_id, last_checked) in data:
 				await self.fetch(int(channel_id),playlist_id,playlist_name, convert_time(last_checked))
