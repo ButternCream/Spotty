@@ -1,6 +1,6 @@
 # Spotty - The Spotify music sharing bot
 
-#### To simply add the bot to your server just [click here](https://discordapp.com/oauth2/authorize?scope=bot&permissions=11392&client_id=519285781479555089)
+#### To simply add the bot to your server just [click here](https://discordapp.com/oauth2/authorize?scope=bot&permissions=11392&client_id=519285781479555089). Then read steps 5 and 6 under [How To Use](#how-to-use-question)
 
 #### Its currently just running on my raspberry pi but I eventually might move it to a VPC
 
