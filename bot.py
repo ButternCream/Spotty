@@ -231,12 +231,11 @@ class Spotty(commands.Bot):
 		Perform a fetch for all database entries
 		:return: None
 		"""
-		global token
+		global credential_manager
 		global spotify
 		await self.wait_until_ready()
 		while not self.is_closed():
-			token = generate_token()
-			spotify = spotipy.Spotify(auth=token)
+			spotify = spotipy.Spotify(client_credentials_manager=credential_manager)
 			data = self._dbpointer.fetch_tracking_data()
 			for (playlist_id, playlist_name, channel_id, last_checked) in data:
 				await self.fetch(int(channel_id),playlist_id,playlist_name, convert_time(last_checked))
@@ -260,94 +259,93 @@ class Spotty(commands.Bot):
 			await ctx.send("Sorry you cant do that :no_good:")
 
 async def extract_playlist_id(string):
-        """
-        Takes in a string and extracts the playlist id
-        :param string: The spotify playlist URL or id
-        :return: The id
-        """
-        p = re.compile(r"(?<!=)[0-9a-zA-Z]{22}")
-        result = p.findall(string)
-        if len(result) > 0:
-                return result[0]
-        logging.error('Invalid playlist id or url')
+		"""
+		Takes in a string and extracts the playlist id
+		:param string: The spotify playlist URL or id
+		:return: The id
+		"""
+		p = re.compile(r"(?<!=)[0-9a-zA-Z]{22}")
+		result = p.findall(string)
+		if len(result) > 0:
+				return result[0]
+		logging.error('Invalid playlist id or url')
 
 def convert_time(time_string):
-        """
-        Takes time as a string and converts it to an aware datetime
-        :param time_string: Time in the form %Y-%m-%dT%H:%M:%SZ
-        :return: An aware datetime
-        """
-        added_at = datetime.datetime.strptime(time_string, '%Y-%m-%dT%H:%M:%SZ')
-        return pytz.UTC.localize(added_at)
+		"""
+		Takes time as a string and converts it to an aware datetime
+		:param time_string: Time in the form %Y-%m-%dT%H:%M:%SZ
+		:return: An aware datetime
+		"""
+		added_at = datetime.datetime.strptime(time_string, '%Y-%m-%dT%H:%M:%SZ')
+		return pytz.UTC.localize(added_at)
 
-def generate_token():
-        """ Generate the token for Spotify. """
-        credentials = oauth2.SpotifyClientCredentials(
-                client_id=client_id,
-                client_secret=client_secret)
-        token = credentials.get_access_token()
-        return token
+def generate_credentials():
+		""" Generate the token for Spotify. """
+		credentials = oauth2.SpotifyClientCredentials(
+				client_id=client_id,
+				client_secret=client_secret)
+		return credentials
 
 
 def get_current_time(as_string=False):
-        """
-        Get the current time
-        :param as_string: Whether to return a datetime or as a string (for the db)
-        :return: The current time
-        """
-        ret = new_time.localize(datetime.datetime.now()).astimezone(old_time)
-        return ret.strftime('%Y-%m-%dT%H:%M:%SZ') if as_string else ret
+		"""
+		Get the current time
+		:param as_string: Whether to return a datetime or as a string (for the db)
+		:return: The current time
+		"""
+		ret = new_time.localize(datetime.datetime.now()).astimezone(old_time)
+		return ret.strftime('%Y-%m-%dT%H:%M:%SZ') if as_string else ret
 
 async def fetch_playlist_name(username, playlist_id):
-        """
-        Find the name of a spotify playlist by its id
-        :return: The name of the playlist
-        """
-        result = spotify.user_playlist(username, playlist_id)
-        return result['name']
+		"""
+		Find the name of a spotify playlist by its id
+		:return: The name of the playlist
+		"""
+		result = spotify.user_playlist(username, playlist_id)
+		return result['name']
 
 async def fetch_playlist_link(username, playlist_id):
-        """
-        Fetches a playlist for new songs
-        :param username: Spotify username / id
-        :param playlist_id: The playlist id
-        :return: The URL of the playlist
-        """
-        result = spotify.user_playlist(username, playlist_id)
-        return result['external_urls']['spotify']
+		"""
+		Fetches a playlist for new songs
+		:param username: Spotify username / id
+		:param playlist_id: The playlist id
+		:return: The URL of the playlist
+		"""
+		result = spotify.user_playlist(username, playlist_id)
+		return result['external_urls']['spotify']
 
 async def fetch_playlist(username, playlist_id, previous_date):
-        """
-        Fetches a playlist for new songs
-        :param username: Spotify username / id
-        :param playlist_id: The playlist id
-        :param previous_date: The last time fetched
-        :return: A list of URLs of the new songs
-        """
-        results = spotify.user_playlist(username, playlist_id, fields='tracks,next,name')
-        tracks = results['tracks']
-        new_songs = []
-        while True:
-                for item in tracks['items']:
-                        track = item['track'] if 'track' in item else item
-                        try:
-                                track_url = track['external_urls']['spotify']
-                                if convert_time(item['added_at']) > previous_date:
-                                        new_songs.append(track_url)
-                        except (KeyError, UnicodeEncodeError) as e:
-                                logging.warn(u'Skipping track {0} by {1} (local only?)'.format(
-                                        track['name'], track['artists'][0]['name']))
-                # 1 page = 50 results
-                # check if there are more pages
-                if tracks['next']:
-                        tracks = spotify.next(tracks)
-                else:
-                        break
-        return new_songs
+		"""
+		Fetches a playlist for new songs
+		:param username: Spotify username / id
+		:param playlist_id: The playlist id
+		:param previous_date: The last time fetched
+		:return: A list of URLs of the new songs
+		"""
+		results = spotify.user_playlist(username, playlist_id, fields='tracks,next,name')
+		tracks = results['tracks']
+		new_songs = []
+		while True:
+				for item in tracks['items']:
+						track = item['track'] if 'track' in item else item
+						try:
+								track_url = track['external_urls']['spotify']
+								if convert_time(item['added_at']) > previous_date:
+										new_songs.append(track_url)
+						except (KeyError, UnicodeEncodeError) as e:
+								logging.warn(u'Skipping track {0} by {1} (local only?)'.format(
+										track['name'], track['artists'][0]['name']))
+				# 1 page = 50 results
+				# check if there are more pages
+				if tracks['next']:
+						tracks = spotify.next(tracks)
+				else:
+						break
+		return new_songs
 
 if __name__ == '__main__':
-        discord_client = Spotty()
-        token = generate_token()
-        spotify = spotipy.Spotify(auth=token)
-        discord_client.run(spotty_token)
-        logging.info("Started spotty")
+		discord_client = Spotty()
+		credential_manager = generate_credentials()
+		spotify = spotipy.Spotify(client_credentials_manager=credential_manager)
+		discord_client.run(spotty_token)
+		logging.info("Started spotty")
