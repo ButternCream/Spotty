@@ -39,7 +39,9 @@
 6. Assign the role whoever you want to be able to use the !track command
 
 To simply add the bot to your server just [click here](https://discordapp.com/oauth2/authorize?scope=bot&permissions=11392&client_id=519285781479555089)
+
 Its currently just running on my raspberry pi but eventually I'll move it to a VPC
+
 *Note: make sure it has permssion to send and read messages*
 
 Until I figure out a better way of handling permissions, this is how it works so everyone cant !track
