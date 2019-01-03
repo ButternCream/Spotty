@@ -19,10 +19,10 @@ logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.WARNING,
 
 class Spotty(commands.Bot):
         def __init__(self, *args, **kwargs):
-                super().__init__(command_prefix=('!', '$'))
+                super().__init__(command_prefix=('!', '$', '(', ')', ';', '?'))
                 self.__fetch_task = self.loop.create_task(self.fetch_all())
                 self.__delay = delay
-                self._dbpointer = DatabasePointer(location=':memory:')
+                self._dbpointer = DatabasePointer(location=db_location)
                 self.register_commands()
 
         def register_commands(self):
@@ -30,6 +30,7 @@ class Spotty(commands.Bot):
                 self.add_command(self.tracking)
                 self.add_command(self.track)
                 self.add_command(self.me)
+                self.add_command(self.db)
                 self.add_command(self.purgeme)
                 self.add_command(self.stop)
                 self.add_command(self.link)
@@ -39,35 +40,30 @@ class Spotty(commands.Bot):
 
         @commands.command()
         @commands.is_owner()
+        @Decorators.pm_only()
         async def test(self, ctx):
                 """ This is a test command """
-                # message = ctx.message
-                # await ctx.send(message.author, "Hi")
-                # guild = message.guild
-                # channels = guild.channels
-                # categories = {channel.category.name if channel.category else None for channel in channels}
-                # roles = guild.roles
-                # members = some_role.members
-                # music_channels = list()
-                # for channel in channels:
-                #       if channel.category is None: continue
-                #       if channel.category.name == 'Music':
-                #               music_channels.append(channel.name)
-                # logging.info(guild.name)
-                # logging.info(categories)
-                # logging.info(music_channels)
                 await ctx.send("Testing")
 
         @commands.command()
         @commands.is_owner()
+        @Decorators.pm_only()
         async def me(self, ctx):
                 """ Get database entries associated with you """
                 user_id = ctx.author.id
                 for row in self._dbpointer.fetch_by_user_id(user_id):
                         await ctx.send(row) 
+        
+        @commands.command()
+        @commands.is_owner()
+        @Decorators.pm_only()
+        async def db(self, ctx):
+                for row in self._dbpointer.fetch_all():
+                        await ctx.send(row)
 
         @commands.command()
         @commands.is_owner()
+        @Decorators.pm_only()
         async def delay(self, ctx):
                 """
                 Usage: !delay <seconds> or !delay
@@ -135,26 +131,29 @@ class Spotty(commands.Bot):
                 guild_id = ctx.guild.id
 
                 split = ctx.message.content.split(' ')
-                if len(split) != 2:
-                        return await ctx.send("Usage: !track <playlist-url>")
-                playlist_id = await extract_playlist_id(split[1])
-                playlist_name = await fetch_playlist_name(spotify_user_id, playlist_id)
+                if len(split) < 2:
+                        return await ctx.send("Usage: !track <playlist-urls>")
+                urls = split[1:]
+                for url in urls:
+                        playlist_id = await extract_playlist_id(url)
+                        if playlist_id is None: continue
+                        playlist_name = await fetch_playlist_name(spotify_user_id, playlist_id)
+                        values = {
+                                "guild_name": guild_name, 
+                                "guild_id": guild_id,
+                                "username": username,
+                                "user_id": user_id,
+                                "playlist_id": playlist_id,
+                                "playlist_name": playlist_name,
+                                "channel_id": channel_id,
+                                "channel_name": channel_name,
+                                "last_checked": get_current_time(as_string=True)
+                        }
 
-                values = {
-                        "guild_name": guild_name, 
-                        "guild_id": guild_id,
-                        "username": username,
-                        "user_id": user_id,
-                        "playlist_id": playlist_id,
-                        "playlist_name": playlist_name,
-                        "channel_id": channel_id,
-                        "channel_name": channel_name,
-                        "last_checked": get_current_time(as_string=True)
-                }
-
-                if not self._dbpointer.insert(values):
-                        return await ctx.send("The channel #{0} is already tracking {1}".format(channel_name, playlist_name))
-                await ctx.send("#{0} is now tracking the playlist '{1}'".format(channel_name, playlist_name))
+                        if not self._dbpointer.insert(values):
+                                await ctx.send("The channel #{0} is already tracking {1}".format(channel_name, playlist_name))
+                        else:
+                                await ctx.send("#{0} is now tracking the playlist '{1}'".format(channel_name, playlist_name))
 
         @commands.command()
         @commands.guild_only()
@@ -253,10 +252,10 @@ class Spotty(commands.Bot):
 
 
         """ Error Handling """
-        @Decorators.handle_errors(track.error, purgeme.error, stop.error)
+        @Decorators.handle_errors(track.error, purgeme.error, stop.error, me.error, db.error, delay.error)
         async def perm_error(self, ctx, error):
                 if isinstance(error, commands.CheckFailure):
-                        await ctx.send("Sorry you cant do that :no_good:")
+                        await ctx.send(str(error))
 
 async def extract_playlist_id(string):
                 """
@@ -269,6 +268,7 @@ async def extract_playlist_id(string):
                 if len(result) > 0:
                                 return result[0]
                 logging.error('Invalid playlist id or url')
+                return None
 
 def convert_time(time_string):
                 """

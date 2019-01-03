@@ -36,6 +36,14 @@ class Decorators:
 			raise PermissionCheckFailure("Sorry you are not allowed to do that :no_good:")
 		return commands.check(predicate)
 
+	""" Decorator for commands that should be PM only """
+	def pm_only():
+		async def predicate(ctx):
+			if ctx.guild is None:
+				return True
+			raise commands.CheckFailure("PM's only :no_good:")
+		return commands.check(predicate)
+
 	"""  
 	Cleaner way for one function to handle multiple bot command errors 
 
