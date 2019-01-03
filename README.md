@@ -1,14 +1,15 @@
-# Spotty
-### The spotify music sharing bot
+# Spotty - The Spotify music sharing bot
+
+#### To simply add the bot to your server just [click here](https://discordapp.com/oauth2/authorize?scope=bot&permissions=11392&client_id=519285781479555089)
+
+#### Its currently just running on my raspberry pi but I eventually might move it to a VPC
+
+#### *Note*: Make sure it has permission to send and read messages
 
 ##### Spotty will fetch songs in the specified playlist every X seconds.
 ##### If it finds any new songs it will post it to the specified discord channel in the database
 
-### What it looks like
-![Image](https://i.imgur.com/JQADBCK.png)
-![WithDB](https://i.imgur.com/nP1H8Sx.png)
-
-### *Todo* :construction:
+### Todo :construction:
 - Wait for spotify webhooks :worried:
 - Exception handling for the database :heavy_check_mark: (kind of)
 - Better permissions for things like !stop and !track :heavy_check_mark:
@@ -38,12 +39,6 @@
 5. Make a role called 'Spotty Admin'
 6. Assign the role whoever you want to be able to use the !track command
 
-To simply add the bot to your server just [click here](https://discordapp.com/oauth2/authorize?scope=bot&permissions=11392&client_id=519285781479555089)
-
-Its currently just running on my raspberry pi but eventually I'll move it to a VPC
-
-*Note: make sure it has permssion to send and read messages*
-
 Until I figure out a better way of handling permissions, this is how it works so everyone cant !track
 
 ### My Config File
@@ -64,3 +59,7 @@ old_time = pytz.timezone("UTC") # Spotify's timestamps
 new_time = pytz.timezone("America/Los_Angeles") # Your timezone
 
 ```
+
+### What It Looks Like
+![Image](https://i.imgur.com/JQADBCK.png)
+![WithDB](https://i.imgur.com/nP1H8Sx.png)
