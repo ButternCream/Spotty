@@ -4,12 +4,13 @@ import discord
 from discord.ext import commands
 import asyncio
 import datetime
-from database import DatabasePointer, DatabseEntry
-from config import *
 import re
 import time
 import logging
-from utils import Decorators
+from utils.decorators import Decorators
+from utils.config import *
+from utils.database import DatabasePointer
+
 logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.WARNING, format=' %(asctime)s - %(levelname)s - %(message)s')
 
 # Spotify fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246
@@ -21,7 +22,7 @@ class Spotty(commands.Bot):
 		super().__init__(command_prefix=('!', '$'))
 		self.__fetch_task = self.loop.create_task(self.fetch_all())
 		self.__delay = delay
-		self._dbpointer = DatabasePointer(location=db_location)
+		self._dbpointer = DatabasePointer(location=':memory:')
 		self.register_commands()
 
 	def register_commands(self):
@@ -234,7 +235,7 @@ class Spotty(commands.Bot):
 		global spotify
 		await self.wait_until_ready()
 		while not self.is_closed():
-			token = token.refresh_access_token(token)
+			token = generate_token()
 			spotify = spotipy.Spotify(auth=token)
 			data = self._dbpointer.fetch_tracking_data()
 			for (playlist_id, playlist_name, channel_id, last_checked) in data:

@@ -96,8 +96,3 @@ class DatabasePointer(object):
     def get_playlist_id_by_unique_id(self, u_id):
         self._cursor.execute("SELECT playlist_id FROM playlists WHERE u_id=:u_id", {"u_id": u_id})
         return self._cursor.fetchone()
-
-# TODO
-class DatabseEntry(object):
-    def __init__(self, **data):
-        self.data = data
