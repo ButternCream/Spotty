@@ -42,16 +42,16 @@
 
 Until I figure out a better way of handling permissions, this is how it works so everyone cant !track
 
-### My Config File
+### Sample Config File
 ```python
 import os
 import pytz
 
-client_id = os.getenv('SPOTIFY_CLIENT_ID')
-client_secret = os.getenv('SPOTIFY_SECRET')
-spotty_token = os.getenv('SPOTTY_TOKEN')
+client_id = 'SPOTIFY_CLIENT_ID'
+client_secret = 'SPOTIFY_SECRET'
+spotty_token = 'BOT_TOKEN'
 
-delay = 20
+delay = 30
 db_location = r'db/spotty.db' # Local db
 
 spotify_user_id = 'your user id'
