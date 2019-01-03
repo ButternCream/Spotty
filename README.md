@@ -23,7 +23,7 @@
 ### Commands :exclamation:
 ```
 !help - As you'd expect
-!track <playlist-id or url> - Will post new songs added to the playlist in the discord channel you use this command in (see image above)
+!track <playlist-id> <playlist-id> ... - Will post new songs added to the playlist in the discord channel you use this command in (see image above)
 !tracking - List the names and ids of what the current channel is tracking
 !stop <id> - Stop the current channel from tracking anything or a specific playlist if the id from !tracking is specified
 !purgeme - Removes ALL of your tracking entries in the database
