@@ -246,7 +246,7 @@ class Spotty(commands.Bot):
         async def on_ready(self):
                 logging.info('We have logged in as {0.user}'.format(self))
                 print('We have logged in as {0.user}'.format(self))
-                await discord_client.change_presence(activity=discord.Game(name="Spotify"))
+                await discord_client.change_presence(activity=discord.Activity(name='Spotify', type=2))
 
         async def on_message(self, message):
                 await self.process_commands(message)
