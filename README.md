@@ -19,7 +19,8 @@
 - !tracking - returns the unique db id of an entry along with the playlist name :heavy_check_mark:
 - !stop :id: - Stop tracking the specified playlist. Where id will be the specified unique id from !tracking :heavy_check_mark:
 - !link :id: - Get the link of the specified playlist. id from !tracking :heavy_check_mark:
-- more tbd
+- Have the option for :id: to also be the spotify playlist id instead of just being the unique id from the database :x:
+- more TBD
 
 ### Commands :exclamation:
 ```
