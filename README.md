@@ -25,7 +25,7 @@
 ### Commands :exclamation:
 ```
 !help - As you'd expect
-!track <playlist-id> <playlist-id> ... - Will post new songs added to the playlist in the discord channel you use this command in (see image above)
+!track <playlist-id> <playlist-id> ... - Will post new songs added to the playlist in the discord channel you use this command in (see below)
 !tracking - List the names and ids of what the current channel is tracking
 !stop <id> - Stop the current channel from tracking anything or a specific playlist if the id from !tracking is specified
 !purgeme - Removes ALL of your tracking entries in the database
@@ -62,5 +62,7 @@ new_time = pytz.timezone("America/Los_Angeles") # Your timezone
 ```
 
 ### What It Looks Like
-![Image](https://i.imgur.com/JQADBCK.png)
-![WithDB](https://i.imgur.com/nP1H8Sx.png)
+![Tracking](https://i.imgur.com/SeE1BYP.png)
+![Track](https://i.imgur.com/0NheqhB.png)
+![Stop](https://i.imgur.com/nLKYO9A.png)
+![StopID](https://i.imgur.com/0fUgIO3.png)
