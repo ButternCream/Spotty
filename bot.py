@@ -7,9 +7,12 @@ import datetime
 import re
 import time
 import logging
+from pprint import pprint
+from random import randint
 from utils.decorators import Decorators
-from utils.config import *
 from utils.database import DatabasePointer
+from utils.config import *
+
 
 logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.WARNING,
 					format=' %(asctime)s - %(levelname)s - %(message)s')
@@ -24,7 +27,7 @@ class Spotty(commands.Bot):
 		super().__init__(command_prefix=('!', '$', '(', ')', ';', '?', '.'))
 		self.__fetch_task = self.loop.create_task(self.fetch_all())
 		self.__delay = delay
-		self._dbpointer = DatabasePointer(location=db_location)
+		self._dbpointer = DatabasePointer()
 		self.register_commands()
 
 	def register_commands(self):
@@ -37,6 +40,7 @@ class Spotty(commands.Bot):
 		self.add_command(self.stop)
 		self.add_command(self.link)
 		self.add_command(self.delay)
+		self.add_command(self.random)
 
 	""" Owner Only Commands """
 
@@ -206,6 +210,42 @@ class Spotty(commands.Bot):
 		embed_msg = await self.deleted_notify_embed()
 		await ctx.send(embed=embed_msg)
 
+	@commands.command()
+	@commands.guild_only()
+	async def random(self, ctx):
+		"""
+		Usage !random <playlist-id or db id>
+		Returns a random song from the specified playlist
+		"""
+		split = ctx.message.content.split(' ')
+		if len(split) != 2:
+			return await ctx.send("Usage: !random <id>")
+		playlist_id = await extract_playlist_id(split[1])
+		if playlist_id is None:
+			playlist_id = self._dbpointer.get_playlist_id_by_unique_id(split[1])[0]
+		results = spotify.user_playlist(spotify_user_id, playlist_id, fields='tracks,next,name')
+		tracks = results['tracks']
+		song_number = randint(1,int(tracks['total']))
+		count = 1
+		while True:
+			for item in tracks['items']:
+				track = item['track'] if 'track' in item else item
+				try:
+					if count == song_number:
+						return await ctx.send(track['external_urls']['spotify'])
+				except (KeyError, UnicodeEncodeError) as e:
+					pass
+				count += 1
+			# 1 page = 50 results
+			# check if there are more pages
+			if tracks['next']:
+				tracks = spotify.next(tracks)
+			else:
+				break
+
+
+		
+
 	""" Coroutine Fetch Functions """
 
 	async def fetch(self, channel_id, playlist_id, playlist_name, last_checked):
@@ -320,76 +360,7 @@ class Spotty(commands.Bot):
 		return embed
 
 
-
-
-async def extract_playlist_id(string):
-	"""
-	Takes in a string and extracts the playlist id
-	:param string: The spotify playlist URL or id
-	:return: The id
-	"""
-	p = re.compile(r"(?<!=)[0-9a-zA-Z]{22}")
-	result = p.findall(string)
-	if len(result) > 0:
-		return result[0]
-	logging.error('Invalid playlist id or url')
-	return None
-
-
-def convert_time(time_string):
-	"""
-	Takes time as a string and converts it to an aware datetime
-	:param time_string: Time in the form %Y-%m-%dT%H:%M:%SZ
-	:return: An aware datetime
-	"""
-	added_at = datetime.datetime.strptime(time_string, '%Y-%m-%dT%H:%M:%SZ')
-	return pytz.UTC.localize(added_at)
-
-
-def generate_credentials():
-	""" Generate the token for Spotify. """
-	credentials = oauth2.SpotifyClientCredentials(
-		client_id=client_id,
-		client_secret=client_secret)
-	return credentials
-
-
-def get_current_time(as_string=False):
-	"""
-	Get the current time
-	:param as_string: Whether to return a datetime or as a string (for the db)
-	:return: The current time
-	"""
-	ret = new_time.localize(datetime.datetime.now()).astimezone(old_time)
-	return ret.strftime('%Y-%m-%dT%H:%M:%SZ') if as_string else ret
-
-
-async def fetch_playlist_art(username, playlist_id):
-	results = spotify.user_playlist(username, playlist_id, fields='images')
-	if results:
-		return results['images'][0]['url']
-	return None
-
-
-async def fetch_playlist_name(username, playlist_id):
-	"""
-	Find the name of a spotify playlist by its id
-	:return: The name of the playlist
-	"""
-	result = spotify.user_playlist(username, playlist_id)
-	return result['name']
-
-
-async def fetch_playlist_link(username, playlist_id):
-	"""
-	Fetches a playlist for new songs
-	:param username: Spotify username / id
-	:param playlist_id: The playlist id
-	:return: The URL of the playlist
-	"""
-	result = spotify.user_playlist(username, playlist_id)
-	return result['external_urls']['spotify']
-
+""" Move Functions """
 
 async def fetch_playlist(username, playlist_id, previous_date):
 	"""
@@ -420,6 +391,73 @@ async def fetch_playlist(username, playlist_id, previous_date):
 		else:
 			break
 	return new_songs
+
+async def fetch_playlist_art(username, playlist_id):
+	results = spotify.user_playlist(username, playlist_id, fields='images')
+	if results:
+		return results['images'][0]['url']
+	return None
+
+
+async def fetch_playlist_name(username, playlist_id):
+	"""
+	Find the name of a spotify playlist by its id
+	:return: The name of the playlist
+	"""
+	result = spotify.user_playlist(username, playlist_id)
+	return result['name']
+
+
+async def fetch_playlist_link(username, playlist_id):
+	"""
+	Fetches a playlist for new songs
+	:param username: Spotify username / id
+	:param playlist_id: The playlist id
+	:return: The URL of the playlist
+	"""
+	result = spotify.user_playlist(username, playlist_id)
+	return result['external_urls']['spotify']
+
+
+def generate_credentials():
+	""" Generate the token for Spotify. """
+	credentials = oauth2.SpotifyClientCredentials(
+		client_id=client_id,
+		client_secret=client_secret)
+	return credentials
+
+async def extract_playlist_id(string):
+	"""
+	Takes in a string and extracts the playlist id
+	:param string: The spotify playlist URL or id
+	:return: The id
+	"""
+	p = re.compile(r"(?<!=)[0-9a-zA-Z]{22}")
+	result = p.findall(string)
+	if len(result) > 0:
+		return result[0]
+	logging.error('Invalid playlist id or url')
+	return None
+
+def convert_time(time_string):
+	"""
+	Takes time as a string and converts it to an aware datetime
+	:param time_string: Time in the form %Y-%m-%dT%H:%M:%SZ
+	:return: An aware datetime
+	"""
+	added_at = datetime.datetime.strptime(time_string, '%Y-%m-%dT%H:%M:%SZ')
+	return pytz.UTC.localize(added_at)
+
+
+def get_current_time(as_string=False):
+	"""
+	Get the current time
+	:param as_string: Whether to return a datetime or as a string (for the db)
+	:return: The current time
+	"""
+	ret = new_time.localize(datetime.datetime.now()).astimezone(old_time)
+	return ret.strftime('%Y-%m-%dT%H:%M:%SZ') if as_string else ret
+
 
 if __name__ == '__main__':
 	discord_client = Spotty()
