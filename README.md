@@ -14,7 +14,7 @@
 - Exception handling for the database :heavy_check_mark: (kind of)
 - Better permissions for things like !stop and !track :heavy_check_mark:
 - Limit the channels in which !track can be called :x:
-- !random :id: - Randomly pick a song from the specific playlist :x:
+- !random :id: - Randomly pick a song from the specific playlist :heavy_check_mark:
 - !where - List the channels in the server that are tracking playlists :x:
 - !tracking - returns the unique db id of an entry along with the playlist name :heavy_check_mark:
 - !stop :id: - Stop tracking the specified playlist. Where id will be the specified unique id from !tracking :heavy_check_mark:
@@ -30,6 +30,7 @@
 !stop <id> - Stop the current channel from tracking anything or a specific playlist if the id from !tracking is specified
 !purgeme - Removes ALL of your tracking entries in the database
 !link <id> - Get the link of a playlist you are tracking. Get id from !tracking
+!random <id> - Gets a random song from the playlist specified. id can be from !tracking or the playlists id
 ```
 
 ### How To Use :question:
