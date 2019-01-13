@@ -1,3 +1,11 @@
+""" Logging """
+import logging
+from logging.handlers import RotatingFileHandler
+
+handler = RotatingFileHandler('logs/spotty.log', maxBytes=3000, backupCount=10)
+logging.basicConfig(level=logging.INFO,format=' %(asctime)s - %(levelname)s - %(message)s',handlers=(handler,))
+
+""" Imports """
 import spotipy
 import spotipy.oauth2 as oauth2
 import discord
@@ -12,9 +20,6 @@ from random import randint
 from utils.decorators import Decorators
 from utils.database import DatabasePointer
 from utils.helpers import *
-import logging
-logging.basicConfig(filename=r'spotty.log', filemode='w', level=logging.WARNING,
-					format=' %(asctime)s - %(levelname)s - %(message)s')
 
 # Spotify fetching code courtesy of ritiek https://github.com/plamere/spotipy/issues/246
 
@@ -134,7 +139,7 @@ def load_extensions(bot, extensions):
 		try:
 			bot.load_extension(extension)
 		except Exception as e:
-			print(f'Failed to load extension {extension}.', file=sys.stderr)
+			logging.error('Failed to load extension %s' % str(extension))
 			traceback.print_exc()
 
 
