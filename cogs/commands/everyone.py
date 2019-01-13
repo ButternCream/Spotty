@@ -79,7 +79,7 @@ class Everyone(object):
 	""" Error Handling """
 	@Decorators.handle_errors(random.error, tracking.error, link.error)
 	async def perm_error(self, ctx, error):
-		await ctx.send(str(error))
+		logging.error(str(error))
 
 def setup(bot):
 	bot.add_cog(Everyone(bot))

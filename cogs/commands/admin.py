@@ -104,7 +104,7 @@ class Admin(object):
 	""" Error Handling """
 	@Decorators.handle_errors(track.error, purgeme.error, stop.error)
 	async def perm_error(self, ctx, error):
-		await ctx.send(str(error))
+		logging.error(str(error))
 
 def setup(bot):
 	bot.add_cog(Admin(bot))

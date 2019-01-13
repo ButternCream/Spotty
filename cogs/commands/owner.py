@@ -52,7 +52,7 @@ class Owner(object):
 	""" Error Handling """
 	@Decorators.handle_errors(me.error, db.error, delay.error)
 	async def perm_error(self, ctx, error):
-		await ctx.send(str(error))
+		logging.error(str(error))
 
 def setup(bot):
 	bot.add_cog(Owner(bot))
