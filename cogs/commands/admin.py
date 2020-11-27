@@ -5,7 +5,7 @@ from utils.helpers import *
 import logging
 
 """ Admin Commands """
-class Admin(object):
+class Admin(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 

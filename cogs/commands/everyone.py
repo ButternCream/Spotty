@@ -4,8 +4,9 @@ from utils.decorators import Decorators
 from utils.helpers import *
 from random import randint
 import logging
+from discord.ext import commands
 
-class Everyone(object):
+class Everyone(commands.Cog):
 	def __init__(self, bot):
 		self.bot = bot
 
