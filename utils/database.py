@@ -1,6 +1,9 @@
 import sqlite3
 from sqlite3 import OperationalError, IntegrityError
 
+class InvalidKeyError(Exception):
+    pass
+
 """
 Database class to manage the database and various operations
 """
@@ -11,6 +14,18 @@ class DatabasePointer(object):
         self._cursor = self._connection.cursor()
         self.__loc = location
         self.__create_table()
+        self.__valid_keys = (
+             "u_id",
+             "guild_name",
+             "guild_id",
+             "username",
+             "user_id",
+             "playlist_id",
+             "playlist_name",
+             "channel_id",
+             "channel_name",
+             "last_checked",
+             )
 
     def __repr__(self):
         return "DatabasePointer(location=%s) -> %s" % (self.__loc, self._filename)
@@ -63,6 +78,10 @@ class DatabasePointer(object):
     def delete_by_unique_id(self, value):
         with self._connection:
             self._cursor.execute("DELETE FROM playlists WHERE u_id=:u_id", value)
+    
+    def delete_by_playlist_id(self, value):
+        with self._connection:
+            self._cursor.execute("DELETE FROM playlists WHERE playlist_id=:pid", value)
 
     """ Fetching """
     def fetch_all(self):
@@ -96,3 +115,17 @@ class DatabasePointer(object):
     def get_playlist_id_by_unique_id(self, u_id):
         self._cursor.execute("SELECT playlist_id FROM playlists WHERE u_id=:u_id", {"u_id": u_id})
         return self._cursor.fetchone()
+
+    # TODO
+    # def fetch_where(self, select='*', **where):
+    #     print(where.keys())
+    #     if any(not (key in self.__valid_keys) for key in where.keys()):
+    #         raise InvalidKeyError("{key} is not a valid key. Valid keys are:\n{valid}".format(key=str(key), valid=where.keys()))
+    #     if len(where.items()) == 1:
+    #         where_str = 
+    #     where_str = str()
+    #     for (key,value) in where.items():
+    #         where_str += 
+    #     if isinstance(select, list):
+    #         select = ','.join(select)
+    #     #query = "SELECT {0} FROM playlists WHERE "

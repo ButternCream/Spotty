@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from utils.decorators import Decorators
 from discord.ext import commands
+import logging
 
 class Owner(commands.Cog):
 	def __init__(self, bot):

@@ -1,6 +1,5 @@
 from .config import *
 import spotipy.oauth2 as oauth2
-import spotipy
 import re
 import logging
 import datetime

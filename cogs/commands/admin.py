@@ -86,15 +86,24 @@ class Admin(commands.Cog):
 		user_id = ctx.author.id
 		channel_id = ctx.channel.id
 		channel_name = ctx.channel.name
-
+		
+		# TODO: Clean up this garbage lol
 		split = ctx.message.content.split(' ')
 		if len(split) > 1:
-			id = int(split[1])
-			owner_id = int(self.bot._dbpointer.get_user_id_for_unique_id(id)[0])
+			id = await extract_playlist_id(split[1])
+			row = self.bot._dbpointer.fetch_by_playlist_id(id)[0]
+			if not row:
+				return
+			owner_id = int(self.bot._dbpointer.get_user_id_for_unique_id(row[0])[0])
 			if owner_id != user_id:
 				return await ctx.send("Hmmm you shouldn't do that :no_good:")
-			name = self.bot._dbpointer.fetch_name_by_unique_id(id)[0]
-			self.bot._dbpointer.delete_by_unique_id({"u_id": id})
+			if id:
+				self.bot._dbpointer.delete_by_playlist_id({"pid": id})
+				name = row[6] # ew
+			else:
+				id = int(split[1])
+				self.bot._dbpointer.delete_by_unique_id({"u_id": id})
+				name = self.bot._dbpointer.fetch_name_by_unique_id(id)[0]
 			embed_msg = await self.bot.deleted_notify_embed(name=name)
 			return await ctx.send(embed=embed_msg)
 		self.bot._dbpointer.delete_by_channel_id({"channel_id": channel_id})
